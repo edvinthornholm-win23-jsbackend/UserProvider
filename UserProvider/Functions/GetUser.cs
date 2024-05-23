@@ -123,6 +123,77 @@ namespace UserProvider.Functions
                 return new StatusCodeResult(StatusCodes.Status500InternalServerError);
             }
         }
+        [Function("DeleteUser")]
+        public async Task<IActionResult> DeleteUser(
+            [HttpTrigger(AuthorizationLevel.Function, "delete")] HttpRequest req)
+        {
+            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
+            dynamic data = JsonConvert.DeserializeObject(requestBody);
+
+            string userId = data?.id;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return new BadRequestObjectResult("User ID is missing.");
+            }
+
+            try
+            {
+                var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
+
+                if (existingUser == null)
+                {
+                    return new NotFoundObjectResult("User not found.");
+                }
+
+                _context.Users.Remove(existingUser);
+                await _context.SaveChangesAsync();
+
+                return new OkObjectResult("User deleted successfully.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while deleting the user.");
+                return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+            }
+        }
+
+        //[Function("DeleteUser")]
+        //public async Task<IActionResult> DeleteUser(
+        //    [HttpTrigger(AuthorizationLevel.Function, "delete")] HttpRequest req)
+        //{
+        //    // Läs id från URL:en
+        //    string id = req.RouteValues["id"].ToString();
+
+        //    if (string.IsNullOrEmpty(id))
+        //    {
+        //        return new BadRequestObjectResult("User ID is missing.");
+        //    }
+
+        //    try
+        //    {
+        //        // Hitta användaren baserat på id
+        //        var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+
+        //        if (existingUser == null)
+        //        {
+        //            return new NotFoundObjectResult("User not found.");
+        //        }
+
+        //        // Ta bort användaren
+        //        _context.Users.Remove(existingUser);
+        //        await _context.SaveChangesAsync();
+
+        //        return new OkObjectResult("User deleted successfully.");
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogError(ex, "An error occurred while deleting the user.");
+        //        return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+        //    }
+        //}
+
+
 
 
         //    [Function("UpdateUser")]
